@@ -1,0 +1,12 @@
+{
+  "php": {
+    "version": "8.4"
+  },
+  "extensions": [
+    "grpc",
+    "zip",
+    "gd",
+    "exif",
+    "sodium"
+  ]
+}
