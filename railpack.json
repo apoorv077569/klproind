@@ -2,11 +2,14 @@
   "php": {
     "version": "8.4"
   },
-  "extensions": [
-    "grpc",
-    "zip",
-    "gd",
-    "exif",
-    "sodium"
-  ]
+  "phases": {
+    "install": {
+      "cmds": [
+        "composer install --optimize-autoloader --no-dev --no-scripts --no-interaction --ignore-platform-reqs"
+      ]
+    },
+    "build": {
+      "cmds": []
+    }
+  }
 }
