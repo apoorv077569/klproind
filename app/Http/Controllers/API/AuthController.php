@@ -44,9 +44,9 @@ class AuthController extends Controller
                 throw new Exception($validator->messages()->first(), 422);
             }
 
-            $internalType = ($request->role === 'provider' || $request->role === 'serviceman') 
-                            ? 'register_provider' 
-                            : 'register_user';
+            $internalType = ($request->role === 'provider' || $request->role === 'serviceman')
+                ? 'register_provider'
+                : 'register_user';
 
             // Role-specific uniqueness check
             if ($internalType === 'register_user') {
@@ -89,7 +89,6 @@ class AuthController extends Controller
                 'message' => 'OTP has been sent to your email. Valid for 10 minutes.',
                 'success' => true,
             ];
-
         } catch (Exception $e) {
             throw new ExceptionHandler($e->getMessage(), $e->getCode());
         }
@@ -111,9 +110,9 @@ class AuthController extends Controller
                 throw new Exception($validator->messages()->first(), 422);
             }
 
-            $internalType = ($request->role === 'provider' || $request->role === 'serviceman') 
-                            ? 'register_provider' 
-                            : 'register_user';
+            $internalType = ($request->role === 'provider' || $request->role === 'serviceman')
+                ? 'register_provider'
+                : 'register_user';
 
             $record = DB::table('email_verifications')
                 ->where('email', $request->email)
@@ -137,7 +136,6 @@ class AuthController extends Controller
                 'message' => 'Email verified successfully. You can now complete your registration.',
                 'success' => true,
             ];
-
         } catch (Exception $e) {
             throw new ExceptionHandler($e->getMessage(), $e->getCode());
         }
@@ -146,13 +144,16 @@ class AuthController extends Controller
 
     public function register(Request $request)
     {
-        
+
         DB::beginTransaction();
         try {
             $validator = Validator::make($request->all(), [
                 'name' => 'required|string|max:255',
                 'email' => [
-                    'required', 'string', 'email', 'max:255',
+                    'required',
+                    'string',
+                    'email',
+                    'max:255',
                     function ($attribute, $value, $fail) {
                         if (User::role(RoleEnum::CONSUMER)->where('email', $value)->whereNull('deleted_at')->exists()) {
                             $fail(__('validation.unique', ['attribute' => 'email']));
@@ -160,7 +161,8 @@ class AuthController extends Controller
                     }
                 ],
                 'phone' => [
-                    'required', 'min:6',
+                    'required',
+                    'min:6',
                     function ($attribute, $value, $fail) {
                         if (User::role(RoleEnum::CONSUMER)->where('phone', $value)->whereNull('deleted_at')->exists()) {
                             $fail(__('validation.unique', ['attribute' => 'phone']));
@@ -241,7 +243,7 @@ class AuthController extends Controller
             if ($request->referral_code) {
                 $this->applyReferralCode($request->referral_code, $user, 'user');
             }
-            
+
             return [
                 'access_token' => $user->createToken('auth_token')->plainTextToken,
                 'success' => true,
@@ -261,7 +263,9 @@ class AuthController extends Controller
                 'type' => 'required|string',
                 'name' => 'required|string|max:255',
                 'email' => [
-                    'required', 'string', 'email',
+                    'required',
+                    'string',
+                    'email',
                     function ($attribute, $value, $fail) {
                         if (User::role([RoleEnum::PROVIDER, RoleEnum::SERVICEMAN])->where('email', $value)->whereNull('deleted_at')->exists()) {
                             $fail(__('validation.unique', ['attribute' => 'email']));
@@ -269,7 +273,8 @@ class AuthController extends Controller
                     }
                 ],
                 'phone' => [
-                    'required', 'numeric',
+                    'required',
+                    'numeric',
                     function ($attribute, $value, $fail) {
                         if (User::role([RoleEnum::PROVIDER, RoleEnum::SERVICEMAN])->where('phone', $value)->whereNull('deleted_at')->exists()) {
                             $fail(__('validation.unique', ['attribute' => 'phone']));
@@ -322,7 +327,7 @@ class AuthController extends Controller
                 'referral_code' => Helpers::getReferralCodeByName($request->name, 6),
             ]);
 
-            if($request->role == RoleEnum::PROVIDER){
+            if ($request->role == RoleEnum::PROVIDER) {
                 $provider->assignRole(RoleEnum::PROVIDER);
             } else {
                 $provider->assignRole(RoleEnum::SERVICEMAN);
@@ -367,7 +372,7 @@ class AuthController extends Controller
             if ($request->referral_code) {
                 $this->applyReferralCode($request->referral_code, $provider, 'provider');
             }
-            
+
             event(new CreateProviderEvent($provider));
             return [
                 'access_token' => $provider->createToken('auth_token')->plainTextToken,
@@ -381,8 +386,40 @@ class AuthController extends Controller
         }
     }
 
+    // public function login(Request $request)
+    // {
+    //     try {
+    //         $user = $this->verifyLogin($request);
+
+    //         if (!Hash::check($request->password, $user->password)) {
+    //             throw new Exception(__('passwords.incorrect_password'), 400);
+    //         }
+
+    //         if ($request->fcm_token) {
+    //             $user->fcm_token = $request->fcm_token;
+    //             $user->save();
+    //         }
+
+    //         $token = $user->createToken('auth_token')->plainTextToken;
+
+    //         return response()->json([
+    //             'isSuccess' => true,
+    //             'message' => 'Login success',
+    //             'access_token' => $token,
+    //             'user' => $user
+    //         ], 200);
+    //     } catch (Exception $e) {
+    //         return response()->json([
+    //             'isSuccess' => false,
+    //             'message' => $e->getMessage()
+    //         ], 400);
+    //     }
+    // }
+
     public function login(Request $request)
     {
+            dd("LOGIN HIT");
+
         try {
             $user = $this->verifyLogin($request);
 
@@ -397,13 +434,17 @@ class AuthController extends Controller
 
             $token = $user->createToken('auth_token')->plainTextToken;
 
-            return [
+            return response()->json([
+                'isSuccess' => true,
+                'message' => 'Login success',
                 'access_token' => $token,
-                'success' => true,
-            ];
-
+                'user' => $user
+            ], 200);
         } catch (Exception $e) {
-            throw new ExceptionHandler($e->getMessage(), $e->getCode());
+            return response()->json([
+                'isSuccess' => false,
+                'message' => $e->getMessage()
+            ], 400);
         }
     }
 
@@ -453,7 +494,6 @@ class AuthController extends Controller
                 'phone' => $phone,
                 'code' => $code,
             ]);
-
         } else {
             $email = $user->email;
             $name = $user->name;
@@ -477,7 +517,6 @@ class AuthController extends Controller
         }
 
         return $newUser;
-
     }
 
     public function verifyLogin(Request $request)
@@ -493,7 +532,7 @@ class AuthController extends Controller
         }
 
         $user = User::where([['email', $request->email], ['status', true]])->first();
-        
+
         if (!$user) {
             throw new Exception(__('validation.user_not_exists'), 400);
         }
@@ -562,7 +601,6 @@ class AuthController extends Controller
                 'message' => __('auth.sent_verification_code_msg'),
                 'success' => true,
             ];
-
         } catch (Exception $e) {
 
             throw new ExceptionHandler($e->getMessage(), $e->getCode());
@@ -582,11 +620,11 @@ class AuthController extends Controller
             }
 
             $otp = rand(111111, 999999);
-            $sendTo = ('+'.$request->dial_code.$request->phone);
+            $sendTo = ('+' . $request->dial_code . $request->phone);
             $message = "This is your otp:$otp";
 
             $sendOTP = Helpers::sendSMS($sendTo, $message);
-            if(isset($sendOTP->account_sid)){
+            if (isset($sendOTP->account_sid)) {
                 DB::table('password_resets')->insert([
                     'otp' => $otp,
                     'phone' => $request->phone,
@@ -602,8 +640,6 @@ class AuthController extends Controller
                     'success' => false,
                 ];
             }
-
-
         } catch (Exception $e) {
 
             throw new ExceptionHandler($e->getMessage(), $e->getCode());
@@ -613,7 +649,7 @@ class AuthController extends Controller
     public function verifySendOtp(Request $request)
     {
         try {
-            if(Helpers::getDefaultSMSGateway() !== 'firebase') {
+            if (Helpers::getDefaultSMSGateway() !== 'firebase') {
                 $validator = Validator::make($request->all(), [
                     'otp' => 'required',
                     'phone' => 'required',
@@ -661,7 +697,6 @@ class AuthController extends Controller
                     'user' => $user,
                     'success' => true,
                 ];
-
             } else {
                 $validator = Validator::make($request->all(), [
                     'phone' => 'required|string',
@@ -673,24 +708,22 @@ class AuthController extends Controller
                 }
 
 
-                    $user = User::where('phone', $request->phone)->first();
-                    if (!$user) {
-                        throw new Exception(__('auth.user_not_exists'), 404);
-                    }
+                $user = User::where('phone', $request->phone)->first();
+                if (!$user) {
+                    throw new Exception(__('auth.user_not_exists'), 404);
+                }
 
-                    if (empty($user->firebase_uid)) {
-                        $user->firebase_uid = $request->firebase_uid;
-                        $user->save();
-                    }
+                if (empty($user->firebase_uid)) {
+                    $user->firebase_uid = $request->firebase_uid;
+                    $user->save();
+                }
 
-                    return [
-                        'access_token' => $user->createToken('auth_token')->plainTextToken,
-                        'user' => $user,
-                        'success' => true,
-                    ];
+                return [
+                    'access_token' => $user->createToken('auth_token')->plainTextToken,
+                    'user' => $user,
+                    'success' => true,
+                ];
             }
-
-
         } catch (Exception $e) {
 
             DB::rollback();
@@ -756,7 +789,6 @@ class AuthController extends Controller
                 'message' => __('auth.password_has_been_changed'),
                 'success' => true,
             ];
-
         } catch (Exception $e) {
 
             DB::rollback();
@@ -806,7 +838,6 @@ class AuthController extends Controller
                 'user' => $user,
                 'success' => true,
             ];
-
         } catch (Exception $e) {
 
             DB::rollback();
