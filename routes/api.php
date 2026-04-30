@@ -14,8 +14,8 @@ use Illuminate\Support\Facades\Route;
 */
 
 Route::group([], function () {
-    // Route::post('/login', 'App\Http\Controllers\API\AuthController@login');
     Route::post('/login', 'App\Http\Controllers\API\AuthController@login');
+    // Route::post('/login', 'App\Http\Controllers\API\AuthController@login');
     Route::post('/social/login', 'App\Http\Controllers\API\AuthController@socialLogin');
     Route::get('/logout', 'App\Http\Controllers\API\AuthController@logout');
     Route::post('/forgot-password', 'App\Http\Controllers\API\AuthController@forgotPassword');

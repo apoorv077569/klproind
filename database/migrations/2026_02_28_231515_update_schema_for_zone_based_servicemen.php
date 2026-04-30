@@ -15,13 +15,20 @@ return new class extends Migration
         if (Schema::hasTable('provider_zones')) {
             Schema::rename('provider_zones', 'serviceman_zones');
             // If the old pivot had 'provider_id', let's rename it to 'serviceman_id' or 'user_id'
+            // Schema::table('serviceman_zones', function (Blueprint $table) {
+            //     if (Schema::hasColumn('serviceman_zones', 'provider_id')) {
+            //         // Try to drop foreign key if it exists
+            //         try {
+            //             $table->dropForeign(['provider_id']);
+            //         } catch (\Exception $e) {
+            //         }
+
+            //         $table->renameColumn('provider_id', 'user_id');
+            //     }
+            // });
+
             Schema::table('serviceman_zones', function (Blueprint $table) {
                 if (Schema::hasColumn('serviceman_zones', 'provider_id')) {
-                    // Try to drop foreign key if it exists
-                    try {
-                        $table->dropForeign(['provider_id']);
-                    } catch (\Exception $e) {}
-                    
                     $table->renameColumn('provider_id', 'user_id');
                 }
             });
@@ -32,7 +39,8 @@ return new class extends Migration
             Schema::table('users', function (Blueprint $table) {
                 try {
                     $table->dropForeign(['provider_id']);
-                } catch (\Exception $e) {}
+                } catch (\Exception $e) {
+                }
                 $table->dropColumn('provider_id');
             });
         }
@@ -42,7 +50,8 @@ return new class extends Migration
             if (Schema::hasColumn('bookings', 'provider_id')) {
                 try {
                     $table->dropForeign(['provider_id']);
-                } catch (\Exception $e) {}
+                } catch (\Exception $e) {
+                }
                 $table->dropColumn('provider_id');
             }
 
@@ -77,13 +86,20 @@ return new class extends Migration
             $table->unsignedBigInteger('provider_id')->nullable();
         });
 
-        if (Schema::hasTable('serviceman_zones')) {
-            Schema::table('serviceman_zones', function (Blueprint $table) {
-                if (Schema::hasColumn('serviceman_zones', 'user_id')) {
-                    $table->renameColumn('user_id', 'provider_id');
-                }
-            });
-            Schema::rename('serviceman_zones', 'provider_zones');
-        }
+        // if (Schema::hasTable('serviceman_zones')) {
+        //     Schema::table('serviceman_zones', function (Blueprint $table) {
+        //         if (Schema::hasColumn('serviceman_zones', 'user_id')) {
+        //             $table->renameColumn('user_id', 'provider_id');
+        //         }
+        //     });
+        //     Schema::rename('serviceman_zones', 'provider_zones');
+        // }
+
+        Schema::table('serviceman_zones', function (Blueprint $table) {
+            if (Schema::hasColumn('serviceman_zones', 'provider_id')) {
+                // Skip dropping FK, directly rename column
+                $table->renameColumn('provider_id', 'user_id');
+            }
+        });
     }
 };

@@ -418,7 +418,6 @@ class AuthController extends Controller
 
     public function login(Request $request)
     {
-            dd("LOGIN HIT");
 
         try {
             $user = $this->verifyLogin($request);
